@@ -10,21 +10,52 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Interviewer {
-  id     Int     @id @default(autoincrement())
-  name   String
-  avatar String?
+model Day {
+  id                    Int                    @id @default(autoincrement())
+  name                  String
+  AvailableInterviewers AvailableInterviewer[]
+  Appointments          Appointment[]
+
+  @@map("days")
 }
 
-model AvailableInterviewer {
-  id             Int @id @default(autoincrement())
-  interviewer_id Int
-  day_id         Int
+model Appointment {
+  id        Int        @id @default(autoincrement())
+  time      String
+  day_id    Int
+  day       Day        @relation(fields: [day_id], references: [id])
+  interview Interview?
+
+  @@map("appointments")
 }
 
 model Interview {
-  id             Int    @id @default(autoincrement())
+  id             Int         @id @default(autoincrement())
   student        String
   interviewer_id Int
-  appointment_id Int
+  appointment_id Int         @unique
+  appointment    Appointment @relation(fields: [appointment_id], references: [id])
+  interviewer    Interviewer @relation(fields: [interviewer_id], references: [id])
+
+  @@map("interviews")
+}
+
+model Interviewer {
+  id                    Int                    @id @default(autoincrement())
+  name                  String
+  avatar                String
+  AvailableInterviewers AvailableInterviewer[]
+  interviews            Interview[]
+
+  @@map("interviewres")
+}
+
+model AvailableInterviewer {
+  id             Int         @id @default(autoincrement())
+  interviewer_id Int
+  day_id         Int
+  day            Day         @relation(fields: [day_id], references: [id])
+  interviewer    Interviewer @relation(fields: [interviewer_id], references: [id])
+
+  @@map("available_interviewers")
 }
