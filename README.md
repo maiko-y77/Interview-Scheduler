@@ -127,5 +127,3 @@ For the client, you need to:
 - [Express](https://expressjs.com/)
 - [React](https://reactjs.org/)
 - [Socket.io](https://socket.io/)
-
-test
