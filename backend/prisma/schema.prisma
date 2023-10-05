@@ -47,7 +47,7 @@ model Interviewer {
   AvailableInterviewers AvailableInterviewer[]
   interviews            Interview[]
 
-  @@map("interviewres")
+  @@map("interviewers")
 }
 
 model AvailableInterviewer {

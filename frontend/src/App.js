@@ -6,11 +6,13 @@ import "./App.scss";
 import DayList from "./components/DayList";
 import Appointment from "./components/Appointment";
 
+import daysData from "./components/__mocks__/days.json";
 import appointmentsData from "./components/__mocks__/appointments.json";
 
 export default function Application() {
   const [day, setDay] = useState("Monday");
   const [days, setDays] = useState([]);
+  const [interviewers, setInterviewers] = useState([]);
   const [appointments, setAppointments] = useState(appointmentsData);
 
   useEffect(() => {
@@ -18,6 +20,12 @@ export default function Application() {
       .then((res) => setDays(res.data))
       .catch(error => console.log(`something went wrong in get request for days, ${error}`))
   }, [])
+
+  useEffect(() => {
+    axios.get(`http://localhost:8000/api/days/${day}/interviewers`)
+      .then((res) => setInterviewers(res.data))
+      .catch(error => console.log(`something went wrong in get request for interviewers, ${error}`))
+  }, [day])
 
   function bookInterview(id, interview) {
     console.log(id, interview);
@@ -88,6 +96,7 @@ export default function Application() {
         {Object.values(appointments).map((appointment) => (
           <Appointment
             key={appointment.id}
+            interviewers={interviewers}
             {...appointment}
             bookInterview={(interview) =>
               bookInterview(appointment.id, interview)
