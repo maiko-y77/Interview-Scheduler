@@ -2,20 +2,18 @@ import React, { useEffect, useState } from "react";
 import axios from 'axios'
 
 import "./App.scss";
-import { io } from 'socket.io-client';
 
 import DayList from "./components/DayList";
 import Appointment from "./components/Appointment";
 
-const socket = io("http://localhost:8000", {
-  autoConnect: true
-});
+import daysData from "./components/__mocks__/days.json";
+import appointmentsData from "./components/__mocks__/appointments.json";
 
 export default function Application() {
   const [day, setDay] = useState("Monday");
   const [days, setDays] = useState([]);
   const [interviewers, setInterviewers] = useState([]);
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState(appointmentsData);
 
   useEffect(() => {
     axios.get('http://localhost:8000/api/days')
@@ -29,75 +27,58 @@ export default function Application() {
       .catch(error => console.log(`something went wrong in get request for interviewers, ${error}`))
   }, [day])
 
-  useEffect(() => {
-    axios.get(`http://localhost:8000/api/days/${day}/appointments`)
-      .then((res) => setAppointments(res.data))
-      .catch(error => console.log(`something went wrong in get request for appointments, ${error}`))
-  }, [day])
-
-  useEffect(() => {
-    socket.on('appointmentsUpdated', (updatedAppointments) => {
-      setAppointments(updatedAppointments);
-    });
-
-    return () => {
-      socket.off('appointmentsUpdated');
-    };
-  }, []);
-
   function bookInterview(id, interview) {
-    const existingIndex = appointments.findIndex((appointment) => appointment.id === id);
-    const isEditing = appointments[existingIndex].interview
-
-    setAppointments((appointments) => {
-      const newAppointment = { ...appointments[existingIndex], interview }
-      const copied = [...appointments]
-      copied[existingIndex] = newAppointment
-      return copied
-    })
-
-    axios.put(`http://localhost:8000/api/appointments/${id}/interviews`, { interviewer_id: interview.interviewer.id, student: interview.student })
-      .catch((err) => {
-        alert("something went wrong please reload your browser")
-      })
-    // in days states, find the current day and update spots property, deduct 1 available spot
-    if (!isEditing) {
+    console.log(id, interview);
+    const isEdit = appointments[id].interview;
+    setAppointments((prev) => {
+      const appointment = {
+        ...prev[id],
+        interview: { ...interview },
+      };
+      const appointments = {
+        ...prev,
+        [id]: appointment,
+      };
+      return appointments;
+    });
+    if (!isEdit) {
       setDays((prev) => {
-        const dayIndex = prev.findIndex(d => d.name === day)
-        const copied = [...prev]
-        copied[dayIndex].spots -= 1;
-        return copied;
-      })
+        const updatedDay = {
+          ...prev[day],
+          spots: prev[day].spots - 1,
+        };
+        const days = {
+          ...prev,
+          [day]: updatedDay,
+        };
+        return days;
+      });
     }
   }
-
   function cancelInterview(id) {
-    const findAppointmentsIndex = appointments.findIndex(
-      (appointments) => appointments.id === id);
-
     setAppointments((prev) => {
-
-      const updatedAppointment = { ...prev[findAppointmentsIndex], interview: null };
-      const copied = [...prev]
-      copied[findAppointmentsIndex] = updatedAppointment
-      return copied;
+      const updatedAppointment = {
+        ...prev[id],
+        interview: null,
+      };
+      const appointments = {
+        ...prev,
+        [id]: updatedAppointment,
+      };
+      return appointments;
     });
-
     setDays((prev) => {
-      const dayIndex = prev.findIndex(d => d.name === day)
-      const copied = [...prev]
-      copied[dayIndex].spots += 1;
-      return copied;
-    })
-
-    const interviewId = appointments[findAppointmentsIndex].interview.id
-
-    axios.delete(`http://localhost:8000/api/interviews/${interviewId}`)
-      .catch((err) => {
-        alert("something went wrong please reload");
-      });
+      const updatedDay = {
+        ...prev[day],
+        spots: prev[day].spots + 1,
+      };
+      const days = {
+        ...prev,
+        [day]: updatedDay,
+      };
+      return days;
+    });
   }
-
   return (
     <main className="layout">
       <section className="sidebar">
